@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // usa ANON si no quieres insertar con service role
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
