@@ -1,76 +1,119 @@
-'use client';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+"use client";
 
-type FormData = { rut:string; edad:number; comuna:string; plan:'basico'|'intermedio'|'full' };
+import { useState } from "react";
 
 export default function Home() {
-  const { register, handleSubmit, formState:{errors} } = useForm<FormData>();
-  const [quotes, setQuotes] = useState<any[]>([]);
+  const [rut, setRut] = useState("");
+  const [edad, setEdad] = useState<number | "">("");
+  const [comuna, setComuna] = useState("");
+  const [plan, setPlan] = useState("");
   const [loading, setLoading] = useState(false);
+  const [quotes, setQuotes] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = async (data:FormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-    const r = await fetch('/api/quote', { method:'POST', body: JSON.stringify(data) });
-    const j = await r.json();
-    setQuotes(j.quotes || []);
-    setLoading(false);
+    setError(null);
+    setQuotes([]);
+
+    try {
+      const res = await fetch("/api/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rut, edad, comuna, plan }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Error al enviar los datos");
+      } else {
+        setQuotes(data.quotes || []);
+      }
+    } catch (err) {
+      setError("Error de conexión con el servidor");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <section className="mx-auto max-w-5xl px-6 py-12">
-      <div className="grid md:grid-cols-2 gap-8 items-start">
-        <div className="card">
-          <h1 className="text-2xl font-bold text-celeste-900">Compara planes en 1 minuto</h1>
-          <p className="text-celeste-900/70 mt-1 text-sm">Rellena tus datos y te mostramos las mejores opciones.</p>
-          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 mt-5">
-            <input className="input" placeholder="RUT (12.345.678-9)" {...register('rut', {required:true})}/>
-            <input className="input" type="number" placeholder="Edad" {...register('edad', {required:true, min:18, max:90})}/>
-            <input className="input" placeholder="Comuna" {...register('comuna', {required:true})}/>
-            <select className="input" {...register('plan', {required:true})}>
-              <option value="basico">Básico</option>
-              <option value="intermedio">Intermedio</option>
-              <option value="full">Full</option>
-            </select>
-            <button className="btn-primary disabled:opacity-60" disabled={loading}>
-              {loading ? 'Cotizando…' : 'Cotizar'}
-            </button>
-            {Object.keys(errors).length>0 && (
-              <p className="text-red-600 text-sm">Revisa los campos obligatorios.</p>
-            )}
-          </form>
-        </div>
+    <main className="flex min-h-screen items-center justify-center bg-blue-50 p-6">
+      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
+        <h1 className="mb-6 text-center text-2xl font-bold text-blue-600">
+          Compara planes en 1 minuto
+        </h1>
 
-        <div className="space-y-4">
-          <div className="card bg-celeste-50 border-celeste-200">
-            <h2 className="font-semibold text-celeste-900">¿Cómo funciona?</h2>
-            <ul className="list-disc pl-5 text-sm text-celeste-900/80 mt-2 space-y-1">
-              <li>Ingresas tus datos (edad, comuna, plan deseado).</li>
-              <li>Calculamos precios simulados según reglas (puedes cambiarlas).</li>
-              <li>Guardamos tu lead en una base de datos para seguimiento.</li>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            placeholder="RUT"
+            value={rut}
+            onChange={(e) => setRut(e.target.value)}
+            className="w-full rounded-md border border-gray-300 p-2"
+            required
+          />
+
+          <input
+            type="number"
+            placeholder="Edad"
+            value={edad}
+            onChange={(e) => setEdad(Number(e.target.value))}
+            className="w-full rounded-md border border-gray-300 p-2"
+            required
+          />
+
+          <input
+            type="text"
+            placeholder="Comuna"
+            value={comuna}
+            onChange={(e) => setComuna(e.target.value)}
+            className="w-full rounded-md border border-gray-300 p-2"
+            required
+          />
+
+          <input
+            type="text"
+            placeholder="Plan"
+            value={plan}
+            onChange={(e) => setPlan(e.target.value)}
+            className="w-full rounded-md border border-gray-300 p-2"
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-md bg-blue-600 p-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            {loading ? "Cotizando..." : "Cotizar"}
+          </button>
+        </form>
+
+        {error && (
+          <p className="mt-4 text-center text-red-600 font-medium">{error}</p>
+        )}
+
+        {quotes.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">
+              Resultados:
+            </h2>
+            <ul className="space-y-2">
+              {quotes.map((q, i) => (
+                <li
+                  key={i}
+                  className="rounded-md border border-gray-200 p-2 shadow-sm"
+                >
+                  <span className="font-bold">{q.aseguradora}</span>: $
+                  {q.precio}
+                </li>
+              ))}
             </ul>
           </div>
-
-          {!!quotes.length && (
-            <section className="space-y-3">
-              {quotes.map((q) => (
-                <article key={q.id} className="card border-celeste-200">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold text-celeste-900">{q.aseguradora}</h3>
-                      <p className="text-sm text-celeste-900/70">{q.descripcion}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-extrabold text-celeste-800">${q.precio.toLocaleString('es-CL')}</div>
-                      <a href={`/gracias?lead=${encodeURIComponent(q.leadId)}`} className="inline-block mt-2 btn-primary">Lo quiero</a>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </section>
-          )}
-        </div>
+        )}
       </div>
-    </section>
+    </main>
   );
 }
