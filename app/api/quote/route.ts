@@ -29,10 +29,11 @@ export async function POST(req: Request) {
       },
     ]);
 
-    if (error) {
-      console.error('Supabase error:', error);
-      return NextResponse.json({ error: 'Error al guardar lead' }, { status: 500 });
-    }
+ if (error) {
+  console.error('Supabase error:', error);
+  return NextResponse.json({ error: error.message }, { status: 500 });
+}
+
 
     return NextResponse.json({ success: true, quotes });
   } catch (err) {
