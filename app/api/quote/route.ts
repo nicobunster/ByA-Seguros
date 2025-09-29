@@ -1,33 +1,42 @@
 import { NextResponse } from 'next/server';
-import { cotizar } from '@/lib/rules';
-import { supabase } from '@/lib/supabase';
+import supabase from '@/lib/supabase';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.text();
-    const data = JSON.parse(body || '{}');
+    const body = await req.json();
+    const { rut, edad, comuna, plan } = body;
 
-    const quotes = cotizar({
-      edad: Number(data.edad),
-      comuna: String(data.comuna),
-      plan: data.plan,
-    });
+    if (!rut || !edad || !comuna || !plan) {
+      return NextResponse.json(
+        { error: 'Todos los campos son requeridos' },
+        { status: 400 }
+      );
+    }
 
-    // Insertar en la tabla "leads"
-    await supabase.from('leads').insert({
-      rut: String(data.rut || ''),
-      edad: Number(data.edad || 0),
-      comuna: String(data.comuna || ''),
-      plan: String(data.plan || ''),
-      quotes: quotes.map((q: any) => ({
-        aseguradora: q.aseguradora,
-        precio: q.precio,
-      })),
-    });
+    // Aquí puedes aplicar reglas de negocio si quieres (ej: cotizar seguros)
+    const quotes = [
+      { aseguradora: 'Seguro A', precio: 10000 },
+      { aseguradora: 'Seguro B', precio: 12000 },
+    ];
 
-    return NextResponse.json({ ok: true, quotes });
-  } catch (e) {
-    console.error('Error en POST /api/quote:', e);
-    return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
+    const { error } = await supabase.from('leads').insert([
+      {
+        rut: String(rut),
+        edad: Number(edad),
+        comuna: String(comuna),
+        plan: String(plan),
+        quotes,
+      },
+    ]);
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json({ error: 'Error al guardar lead' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, quotes });
+  } catch (err) {
+    console.error('API error:', err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
