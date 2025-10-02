@@ -4,9 +4,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [rut, setRut] = useState("");
-  const [edad, setEdad] = useState<number | "">("");
-  const [comuna, setComuna] = useState("");
-  const [plan, setPlan] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [quotes, setQuotes] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +19,7 @@ export default function Home() {
       const res = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rut, edad, comuna, plan }),
+        body: JSON.stringify({ rut, email }),
       });
 
       const data = await res.json();
@@ -42,7 +40,7 @@ export default function Home() {
     <main className="flex min-h-screen items-center justify-center bg-blue-50 p-6">
       <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
         <h1 className="mb-6 text-center text-2xl font-bold text-blue-600">
-          Compara planes en 1 minuto
+          Cotiza tu seguro en 1 minuto
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -56,28 +54,10 @@ export default function Home() {
           />
 
           <input
-            type="number"
-            placeholder="Edad"
-            value={edad}
-            onChange={(e) => setEdad(Number(e.target.value))}
-            className="w-full rounded-md border border-gray-300 p-2"
-            required
-          />
-
-          <input
-            type="text"
-            placeholder="Comuna"
-            value={comuna}
-            onChange={(e) => setComuna(e.target.value)}
-            className="w-full rounded-md border border-gray-300 p-2"
-            required
-          />
-
-          <input
-            type="text"
-            placeholder="Plan"
-            value={plan}
-            onChange={(e) => setPlan(e.target.value)}
+            type="email"
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-md border border-gray-300 p-2"
             required
           />
@@ -87,7 +67,7 @@ export default function Home() {
             disabled={loading}
             className="w-full rounded-md bg-blue-600 p-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
           >
-            {loading ? "Cotizando..." : "Cotizar"}
+            {loading ? "Enviando..." : "Cotizar"}
           </button>
         </form>
 
